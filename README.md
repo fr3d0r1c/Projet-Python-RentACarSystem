@@ -38,3 +38,5 @@ Generate instant insights via the `CarRentalSystem` class:
 ## 🏗️ Architecture (OOP)
 
 The system relies on a modular Object-Oriented architecture designed for flexibility. The UML diagram below illustrates the hierarchy and relationships between the core components, including the extended fleet:
+
+![Architecture UML du projet](DiagrammeUML.png)
