@@ -1,17 +1,23 @@
 #!/usr/bin/python3
 
 # --------------------------------------------------
-# Main file & importations
+# Importations
 # --------------------------------------------------
 
-from classes import Rental, VehicleMock, CustomerMock 
+# remplacer VehicleMock et CustomerMock une fois faite 
+
+from classes import Rental, VehicleMock, CustomerMock
+
+# --------------------------------------------------
+# Main file
+# --------------------------------------------------
 
 def main():
     try:
-        print("--- Démarrage du système ---")
+        print("\n----- 🏁 Démarrage du système -----")
         
         # Création des objets
-        client = CustomerMock("Thomas Anderson")
+        client = CustomerMock("Alpha")
         voiture = VehicleMock("Tesla", "Model S", 100)
 
         # Utilisation de ta classe Rental
@@ -25,8 +31,8 @@ def main():
         print(location.generate_invoice())
 
     except Exception as e:
-        print(f"Erreur : {e}")
+        print(f"\n----- ❌ Erreur : {e} -----")
 
-# Cette ligne dit : "Si on lance ce fichier directement, exécute la fonction main()"
+# Point d'entrée du script
 if __name__ == "__main__":
     main()
