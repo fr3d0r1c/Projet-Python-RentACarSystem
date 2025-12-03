@@ -4,7 +4,7 @@ class VehicleStatus(Enum):
     AVAILABLE = "Disponible"
     RENTED = "Loué"
     UNDER_MAINTENANCE = "En Maintenance"
-    OUT_OF_SERVICE = "Hors Services"
+    OUT_OF_SERVICE = "Hors Service"
 
 class MaintenanceType(Enum):
     MECHANICAL_CHECK = "Contrôle Mécanique"
