@@ -11,21 +11,38 @@ Cette application doit permettre à une agence de location de :
 * calculer le coût d'une location
 * générer des rapports
 
-  ## Fonctionnalités attendues
+## Fonctionnalités attendues
 
-  ### 1. Gestion de la flotte automobile
+### 1. Gestion de la flotte automobile
 
-  ### 2. Gestion des clients
+- Hiérarchie de classes : Vehicle, Car, Truck, Motorcycle
+- Attributs : id, marque, modèle, catégorie, tarif, état
+- Option avancée : entretien
 
-  ### 3. Système de réservation (Rental)
+### 2. Gestion des clients
 
-  ### 4. Classe centrale CarRentalSystem
+- Classe Customer : id, nom, prénom, âge, permis, historique
+- Règles : âge minimum selon véhicule
 
-  ## Rapport
+### 3. Système de réservation (Rental)
 
-  ## Livrable
+- Données : client, véhicule, dates, coût total
+- Règles : disponibilité, dates valides, pénalités
 
-  - Code en modules (repo GitHub)
-  - UML de calsses
-  - README
-  - Tests unitaires
+### 4. Classe centrale CarRentalSystem
+
+- Gestion : véhicules, clients, locations, recherche, rapports
+
+## Rapport
+
+- Véhicules disponibles
+- Locations en cours
+- Chiffre d’affaires
+- Statistiques
+
+## Livrable
+
+- Code en modules (repo GitHub)
+- UML de calsses
+- README
+- Tests unitaires
