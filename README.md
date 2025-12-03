@@ -14,7 +14,7 @@ Handle a diverse hierarchy of vehicles with specific attributes:
 * **Trucks** 🚚
 * **Motorcycles** 🏍️
 * **Hearses** ⚰️
-* **Horses** 🐴
+* **Horses** (Saddle or carriage) 🐴
 * **Karts** 🏎️
 * **Features:** Track ID, brand, model, daily rate, and maintenance status.
 
