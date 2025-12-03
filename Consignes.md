@@ -21,7 +21,7 @@ Cette application doit permettre à une agence de location de :
 
 ### 2. Gestion des clients (Maxence)
 
-- Classe Customer : id, nom, prénom, âge, permis, historique
+- Classe Customer : id, nom, prénom, âge, permis, historique=fidélité
 - Règles : âge minimum selon véhicule
 
 ### 3. Système de réservation (Rental) (Clémence)
