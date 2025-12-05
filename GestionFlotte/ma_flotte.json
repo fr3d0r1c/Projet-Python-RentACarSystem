@@ -1,0 +1,15 @@
+[
+    {
+        "type": "Car",
+        "id": 1,
+        "daily_rate": 50.0,
+        "status": "Disponible",
+        "maintenance_log": [],
+        "brand": "Toyota",
+        "model": "Yaris",
+        "license_plate": "AA-123-BB",
+        "year": 2022,
+        "door_count": 5,
+        "has_ac": true
+    }
+]

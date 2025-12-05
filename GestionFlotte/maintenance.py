@@ -8,13 +8,13 @@ class Maintenance:
         self.type = m_type
         self.cost = cost
         self.description = description
-        self.duration = duration
+        self.duration = duration # Durée en jours
 
     @property
     def end_date(self):
         days_int = int(self.duration) if self.duration >= 1 else 1
         return self.date + timedelta(days=days_int)
-    
+
     def validate(self):
         print(f"✅ Maintenance #{self.id} ({self.type.value}) - Durée : {self.duration}j")
 

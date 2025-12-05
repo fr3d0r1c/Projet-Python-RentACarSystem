@@ -1,3 +1,4 @@
+# Fichier: main.py
 from storage import StorageManager
 import console_ui as ui 
 
@@ -10,10 +11,10 @@ def main():
         choix = input("\nVotre choix : ")
 
         if choix == '1':
-            ui.list_fleet(my_fleet)
+            # 👇 CHANGEMENT ICI : On appelle le menu de filtres
+            ui.visualize_menu(my_fleet)
         
         elif choix == '2':
-            # Cette fonction gère désormais Terre/Mer/Air
             ui.add_menu_by_environment(my_fleet)
             
         elif choix == '3':
