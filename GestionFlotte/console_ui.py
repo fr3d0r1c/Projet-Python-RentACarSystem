@@ -5,6 +5,8 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt, FloatPrompt, IntPrompt, Confirm
 from rich import print as rprint
+from rich.columns import Columns
+from rich.box import ROUNDED
 
 # Imports de vos classes
 from vehicles import *
@@ -21,7 +23,7 @@ DEFAULT_RENTAL_PRICES = {
     '1': 50.0, '2': 250.0, '3': 90.0, '4': 300.0, '5': 60.0,
     '6': 35.0, '7': 25.0, '8': 80.0, '9': 120.0, '10': 40.0,
     '11': 400.0, '12': 1500.0, '13': 200.0, '14': 150.0,
-    '15': 800.0, '16': 2000.0, '17': 5000.0, '18': 100.0
+    '15': 800.0, '16': 2000.0, '17': 5000.0, '18': 10000.0
 }
 
 DEFAULT_MAINT_COSTS = {
@@ -82,10 +84,68 @@ def show_main_menu():
 [bold green]2.[/] ➕ Ajouter un élément
 [bold green]3.[/] 🔧 Maintenance / Soins
 [bold green]4.[/] 🐴 Atteler (Charrette/Calèche)
-[bold green]5.[/] 🗑️ Supprimer un élément
-[bold red]6.[/] 💾 Sauvegarder et Quitter
+[bold cyan]5.[/] 🔍 Voir Détails Complets (Fiche)
+[bold green]6.[/] 🗑️ Supprimer un élément
+[bold red]7.[/] 💾 Sauvegarder et Quitter
     """
     console.print(Panel(menu_text, title="[bold blue]GESTION DE FLOTTE[/]", subtitle="Terre • Air • Mer", expand=False))
+
+def show_single_vehicle_details(fleet):
+    target_id = ask_int("Entrez l'ID de l'élément à inspecter")
+    obj = next((v for v in fleet if v.id == target_id), None)
+
+    if not obj:
+        console.print("[red]❌ ID introuvable.[/]")
+        return
+    
+    table = Table(title=f"Fiche Technique : {obj.__class__.__name__}", box=ROUNDED, show_header=False)
+    table.add_column("Attribut", style="cyan bold", justify="right")
+    table.add_column("Valeur", style="white")
+
+    table.add_row("ID Unique", str(obj.id))
+
+    s_color = "green" if obj.status == VehicleStatus.AVAILABLE else "red" if obj.status == VehicleStatus.UNDER_MAINTENANCE else "yellow"
+    table.add_row("Statut Actuel", f"[{s_color}]{obj.status.value}[/]")
+
+    table.add_row("Tarif Journalier", f"{obj.daily_rate}€")
+
+    ignored_keys = ['id', 'status', 'daily_rate', 'maintenance_log', 'animals', 'animal_ids']
+
+    for key, value in obj.__dict__.items():
+        if key not in ignored_keys:
+            pretty_key = key.replace("_", " ").title()
+
+            if isinstance(value, bool):
+                pretty_value = "[green]Oui[/]" if value else "[red]Non[/]"
+            else:
+                pretty_value = str(value)
+                
+            table.add_row(pretty_key, pretty_value)
+
+    console.print("\n")
+    console.print(table)
+
+    if isinstance(obj, TowedVehicle) and obj.animals:
+        console.print(f"\n[bold u]🐴 Animaux attelés ({len(obj.animals)}) :[/]")
+        for a in obj.animals:
+            console.print(f" - [cyan]#{a.id}[/] {a.name} ({a.breed})")
+
+    if obj.maintenance_log:
+        console.print(f"\n[bold u]🔧 Historique Maintenance ({len(obj.maintenance_log)}) :[/]")
+        m_table = Table(box=ROUNDED)
+        m_table.add_column("Date", style="dim")
+        m_table.add_column("Type", style="magenta")
+        m_table.add_column("Coût", justify="right")
+        m_table.add_column("Description")
+
+        for m in obj.maintenance_log:
+            m_table.add_row(str(m.date), m.type.value, f"{m.cost}€", m.description)
+
+        console.print(m_table)
+    else:
+        console.print("\n[dim i]Aucun historique de maintenance.[/]")
+
+    Prompt.ask("\n[bold]Appuyez sur Entrée pour revenir au menu...[/]")
 
 # --- 📊 AFFICHAGE EN TABLEAU ---
 def list_fleet(fleet, title_str="État de la Flotte"):

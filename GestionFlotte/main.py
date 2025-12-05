@@ -11,7 +11,6 @@ def main():
         choix = input("\nVotre choix : ")
 
         if choix == '1':
-            # 👇 CHANGEMENT ICI : On appelle le menu de filtres
             ui.visualize_menu(my_fleet)
         
         elif choix == '2':
@@ -24,9 +23,13 @@ def main():
             ui.harness_menu(my_fleet)
 
         elif choix == '5':
-            ui.delete_menu(my_fleet)
+            # 👇 NOUVELLE FONCTION
+            ui.show_single_vehicle_details(my_fleet)
 
         elif choix == '6':
+            ui.delete_menu(my_fleet)
+
+        elif choix == '7':
             storage.save_fleet(my_fleet)
             print("👋 Au revoir !")
             break
