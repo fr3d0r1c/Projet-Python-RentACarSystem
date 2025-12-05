@@ -85,9 +85,10 @@ def show_main_menu():
 [bold green]2.[/] ➕ Ajouter un élément
 [bold green]3.[/] 🔧 Maintenance / Soins
 [bold green]4.[/] 🐴 Atteler (Charrette/Calèche)
-[bold cyan]5.[/] 🔍 Voir Détails Complets (Fiche)
-[bold green]6.[/] 🗑️ Supprimer un élément
-[bold red]7.[/] 💾 Sauvegarder et Quitter
+[bold green]5.[/] 🗑️ Supprimer un élément
+[bold cyan]6.[/] 🔍 Voir Détails (Fiche)
+[bold magenta]7.[/] 📊 Stats & Recherche
+[bold red]8.[/] 💾 Sauvegarder et Quitter
     """
     console.print(Panel(menu_text, title="[bold blue]GESTION DE FLOTTE[/]", subtitle="Terre • Air • Mer", expand=False))
 
@@ -486,3 +487,60 @@ def delete_menu(fleet):
             console.print("[bold red]🗑️ Élément supprimé.[/]")
     else:
         console.print("[red]❌ Introuvable.[/]")
+
+# --- 📊 MENU STATISTIQUES & RECHERCHE ---
+from rich.progress import track
+from time import sleep
+
+def statistics_menu(fleet):
+    while True:
+        console.print(Panel("[1] 📈 Rapport Global\n[2] 🔍 Recherche Avancée\n[0] Retour", title="Intelligence Artificielle (ou presque)"))
+        choice = Prompt.ask("Votre choix", choices=["0", "1", "2"])
+        
+        if choice == '0': break
+
+        # --- 1. RAPPORT GLOBAL ---
+        if choice == '1':
+            total = len(fleet)
+            if total == 0:
+                console.print("[red]Flotte vide.[/]")
+                continue
+
+            # Calculs
+            nb_maint = sum(1 for v in fleet if v.status == VehicleStatus.UNDER_MAINTENANCE)
+            nb_rented = sum(1 for v in fleet if v.status == VehicleStatus.RENTED)
+            nb_avail = sum(1 for v in fleet if v.status == VehicleStatus.AVAILABLE)
+            
+            # Affichage "Fun" avec Rich
+            console.rule("[bold blue]RAPPORT DE FLOTTE[/]")
+            console.print(f"Total Véhicules : [bold cyan]{total}[/]")
+            console.print(f"💰 Revenu Potentiel/Jour : [bold green]{sum(v.daily_rate for v in fleet)}€[/]")
+            
+            # Barres visuelles
+            pct_maint = (nb_maint / total) * 100
+            pct_dispo = (nb_avail / total) * 100
+            
+            rprint(f"\n[red]En Maintenance : {nb_maint}[/] ({pct_maint:.1f}%)")
+            console.print("█" * int(pct_maint/5), style="red")
+            
+            rprint(f"\n[green]Disponibles    : {nb_avail}[/] ({pct_dispo:.1f}%)")
+            console.print("█" * int(pct_dispo/5), style="green")
+            console.print("\n")
+
+        # --- 2. RECHERCHE AVANCÉE ---
+        elif choice == '2':
+            console.rule("[bold yellow]RECHERCHE INTELIGENTE[/]")
+            max_p = ask_float("Budget Max par jour (€)")
+            
+            # Simulation de recherche (pour l'effet wow)
+            for _ in track(range(10), description="Analyse de la base de données..."):
+                sleep(0.05)
+
+            # Filtrage
+            results = [v for v in fleet if v.daily_rate <= max_p and v.status == VehicleStatus.AVAILABLE]
+            
+            if results:
+                # On réutilise votre super fonction d'affichage
+                list_fleet(results, f"Véhicules dispo à moins de {max_p}€")
+            else:
+                console.print(f"[red]Aucun véhicule trouvé pour ce budget.[/]")
