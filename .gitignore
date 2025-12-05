@@ -1,5 +1,6 @@
-__pycache__/
+**/__pycache__/
 
-ma_flotte.json
+GestionFlotte/ma_flotte.json
 
 .DS_Store
+Thumbs.db
