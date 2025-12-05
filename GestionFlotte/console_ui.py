@@ -76,7 +76,7 @@ def show_main_menu():
 [bold green]5.[/] 🗑️ Supprimer un élément
 [bold red]6.[/] 💾 Sauvegarder et Quitter
     """
-    console.print(Panel(menu_text, title="[bold blue]GESTION DE FLOTTE ULTIME v5.0[/]", subtitle="Terre • Air • Mer", expand=False))
+    console.print(Panel(menu_text, title="[bold blue]GESTION DE FLOTTE[/]", subtitle="Terre • Air • Mer", expand=False))
 
 # --- 📊 AFFICHAGE EN TABLEAU ---
 def list_fleet(fleet, title_str="État de la Flotte"):
