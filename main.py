@@ -3,10 +3,9 @@ import os
 from datetime import date, timedelta
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
 project_folder = os.path.join(current_dir, "CarRentalSystem")
-
-sys.path.append(project_folder)
+if project_folder not in sys.path:
+    sys.path.append(project_folder)
 
 from rich.console import Console
 from rich.panel import Panel

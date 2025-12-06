@@ -1,16 +1,17 @@
 {
     "fleet": [
         {
-            "type": "Dragon",
+            "type": "Car",
             "id": 1,
-            "daily_rate": 5000.0,
+            "daily_rate": 50.0,
             "status": "Disponible",
             "maintenance_log": [],
-            "name": "Krokmou",
-            "breed": "",
-            "age": 150,
-            "fire_range": 100.0,
-            "scale_color": "Rouge"
+            "brand": "Toyota",
+            "model": "AA-123-BB",
+            "license_plate": "Yaris",
+            "year": 2025,
+            "door_count": 5,
+            "has_ac": true
         }
     ],
     "customers": [
@@ -22,15 +23,5 @@
             "phone": "0771689357"
         }
     ],
-    "rentals": [
-        {
-            "id": 1,
-            "vehicle_id": 1,
-            "customer_id": 1,
-            "start_date": "2025-12-06",
-            "end_date": "2025-12-11",
-            "total_price": 25000.0,
-            "is_active": false
-        }
-    ]
+    "rentals": []
 }

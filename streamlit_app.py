@@ -2,7 +2,12 @@ import streamlit as st
 import pandas as pd
 import sys
 import os
+import json
+import time
+import requests
+from streamlit_lottie import st_lottie
 from datetime import date, timedelta
+
 
 # --- 1. CONFIGURATION DU CHEMIN ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -44,6 +49,37 @@ def save_data():
     # 👇 CORRECTION ICI : On sauvegarde tout le système
     storage.save_system(system)
     st.toast("Sauvegarde complète effectuée !", icon="💾")
+
+# --- FONCTION POUR CHARGER LES ANIMATIONS LOTTIE ---
+def load_lottiefile(filepath: str):
+    """Charge un fichier Lottie JSON depuis le disque."""
+    try:
+        with open(filepath, "r", encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None
+
+# --- MAPPING DES ANIMATIONS PAR TYPE ---
+# ⚠️ C'est ici que vous devez coller les URLs LottieFiles que vous trouvez !
+# J'ai mis des exemples pour Voiture, Cheval et Dragon.
+ANIMATION_MAP = {
+    # T E R R E
+    "Voiture": "assets/car.json",
+    "Camion": "assets/truck.json",
+    "Bateau": "assets/boat.json",
+    "Aigle": "assets/eagle.json",
+    "Dragon": "assets/dragon.json",
+    "Cheval": "assets/horse.json",
+    "default": "assets/default.json"
+}
+
+# Chargez les animations en mémoire au début (Session State) pour éviter de les retélécharger tout le temps
+if 'lottie_cache' not in st.session_state:
+    st.session_state.lottie_cache = {}
+    for v_type, path in ANIMATION_MAP.items():
+        anim_data = load_lottiefile(path)
+        if anim_data:
+            st.session_state.lottie_cache[v_type] = anim_data
 
 # --- 5. SIDEBAR ---
 st.sidebar.header("🌍 Navigation")
@@ -255,7 +291,16 @@ elif menu == "Gestion Flotte":
                 if obj:
                     system.add_vehicle(obj)
                     save_data()
-                    st.success(f"✅ {v_type} ajouté (ID: {new_id})")
+
+                    lottie_json = st.session_state.lottie_cache.get(v_type)
+                    if not lottie_json:
+                        lottie_json = st.session_state.lottie_cache.get("default")
+
+                    st.success(f"✅ {v_type} ajouté avec succès ! (ID: {new_id})")
+
+                    if lottie_json:
+                        st_lottie(lottie_json, height=250, key=f"anim_add_{new_id}")
+                        time.sleep(3)
                     st.rerun()
 
     # ---------------------------------------------------------
