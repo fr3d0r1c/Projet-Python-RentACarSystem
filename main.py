@@ -1,5 +1,6 @@
 import sys
 import os
+from datetime import date, timedelta
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -111,7 +112,7 @@ def show_global_menu():
 
 [bold red]0.[/] ❌ [bold]QUITTER[/]
     """
-    console.print(Panel(text, title="[bold white on blue] CAR RENTAL SYSTEM ULTIME [/]", expand=False))
+    console.print(Panel(text, title="[bold white on blue] CAR RENTAL SYSTEM [/]", expand=False))
 
 def manage_customers(system):
     while True:

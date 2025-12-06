@@ -67,11 +67,19 @@ class CarRentalSystem:
     def return_vehicle(self, rental_id: int):
         """Clôture une location."""
         rental = next((r for r in self.rentals if r.id == rental_id), None)
-        
+
         if rental and rental.is_active:
             rental.close_rental()
             rental.vehicle.status = VehicleStatus.AVAILABLE
-            print(f"🚗 Retour confirmé pour {rental.vehicle.brand} {rental.vehicle.model}.")
+
+            if hasattr(rental.vehicle, 'brand'):
+                nom_vehicule = f"{rental.vehicle.brand} {rental.vehicle.model}"
+            elif hasattr(rental.vehicle, 'name'):
+                nom_vehicule = f"{rental.vehicle.name} ({rental.vehicle.breed})"
+            else:
+                nom_vehicule = "Véhicule/Attelage"
+
+            print(f"🚗 Retour confirmé pour {nom_vehicule}.")
         else:
             print("❌ Erreur : Location introuvable ou déjà terminée.")
 
