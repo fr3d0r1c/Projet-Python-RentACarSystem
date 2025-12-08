@@ -96,7 +96,10 @@ class StorageManager:
         customer_map = {}
 
         for c in cust_data:
-            new_c = Customer(c["id"], c["name"], c["driver_license"], c["email"], c["phone"])
+            user = c.get("username", f"user{c['id']}")
+            pwd = c.get("password", "1234")
+
+            new_c = Customer(c["id"], c["name"], c["driver_license"], c["email"], c["phone"], user, pwd)
             system.customers.append(new_c)
             customer_map[new_c.id] = new_c
 
