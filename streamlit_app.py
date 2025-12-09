@@ -28,14 +28,47 @@ from location.system import CarRentalSystem
 from location.rental import Rental
 from storage import StorageManager
 from clients.customer import Customer
-from GestionFlotte.vehicles import *
-from GestionFlotte.animals import *
-from GestionFlotte.enums import VehicleStatus, MaintenanceType
-from GestionFlotte.transport_base import MotorizedVehicle, TransportAnimal, TowedVehicle
+from fleet.vehicles import *
+from fleet.animals import *
+from fleet.enums import VehicleStatus, MaintenanceType
+from fleet.transport_base import MotorizedVehicle, TransportAnimal, TowedVehicle
+
+import base64
+
+def play_sound(sound_name):
+    sound_file = os.path.join(current_dir, "assets", "sounds", f"{sound_name}.mp3")
+
+    if not os.path.exists(sound_file):
+        return
+
+    try:
+        with open(sound_file, "rb") as f:
+            data = f.read()
+            b64_val = base64.b64encode(data).decode()
+
+            md = f"""
+                <audio autoplay style="display:none;">
+                <source src="data:audio/mp3;base64,{b64_val}" type="audio/mp3">
+                </audio>
+            """
+            st.markdown(md, unsafe_allow_html=True)
+    except Exception as e:
+        print(f"Erreur audio: {e}")
 
 # =========================================================
 # 2. CONSTANTES & DESIGN
 # =========================================================
+
+SOUND_MAP = {
+    "Voiture": "voiture",
+    "Camion": "camion",      
+    "Dragon": "dragon",        
+    "Cheval": "cheval",
+    "Âne": "ane",
+    "Bateau": "bateau_klaxon",
+    "Avion": "avion_decollage",
+    "Sous-Marin": "sonar"
+}
 
 ADMIN_ACCOUNTS = {
     "admin": "admin123",
@@ -51,12 +84,10 @@ PRICE_MAP = {
 }
 
 DEFAULT_MAINT_COSTS = {
-    # Basiques
     MaintenanceType.MECHANICAL_CHECK: 50.0, MaintenanceType.CLEANING: 20.0,
     MaintenanceType.HOOF_CARE: 40.0, MaintenanceType.SADDLE_MAINTENANCE: 15.0,
     MaintenanceType.TIRE_CHANGE: 120.0, MaintenanceType.OIL_CHANGE: 89.0,
     MaintenanceType.AXLE_GREASING: 30.0,
-    # Spécifiques (MER / AIR / FANTASY)
     MaintenanceType.HULL_CLEANING: 500.0,    # Bateau
     MaintenanceType.SONAR_CHECK: 150.0,      # Sous-marin
     MaintenanceType.NUCLEAR_SERVICE: 5000.0, # Sous-marin
@@ -67,12 +98,10 @@ DEFAULT_MAINT_COSTS = {
 }
 
 DEFAULT_DURATIONS = {
-    # Basiques
     MaintenanceType.MECHANICAL_CHECK: 1.0, MaintenanceType.CLEANING: 0.5,
     MaintenanceType.HOOF_CARE: 0.5, MaintenanceType.SADDLE_MAINTENANCE: 2.0,
     MaintenanceType.TIRE_CHANGE: 0.5, MaintenanceType.OIL_CHANGE: 0.5,
     MaintenanceType.AXLE_GREASING: 1.0,
-    # Spécifiques
     MaintenanceType.HULL_CLEANING: 3.0,
     MaintenanceType.SONAR_CHECK: 1.0,
     MaintenanceType.NUCLEAR_SERVICE: 15.0,
@@ -82,9 +111,7 @@ DEFAULT_DURATIONS = {
     MaintenanceType.SCALE_POLISHING: 0.5
 }
 
-# --- 📚 CATALOGUE DE RÉFÉRENCE (MARQUES / MODÈLES / RACES) ---
 CATALOG = {
-    # TERRE MOTEUR
     "Voiture": {
         "Peugeot": ["208", "308", "3008", "508"],
         "Renault": ["Clio", "Megane", "Captur", "Austral"],
@@ -102,7 +129,6 @@ CATALOG = {
         "Harley-Davidson": ["Sportster", "Fat Bob", "Iron 883"],
         "Kawasaki": ["Z900", "Ninja"]
     },
-    # MER
     "Bateau": {
         "Beneteau": ["Oceanis 40", "Flyer 8"],
         "Zodiac": ["Medline", "Pro Open"],
@@ -113,7 +139,6 @@ CATALOG = {
         "US Navy": ["Virginia Class", "Seawolf"],
         "Comex": ["Remora 2000"]
     },
-    # AIR
     "Avion": {
         "Boeing": ["747", "737 MAX", "777"],
         "Airbus": ["A320", "A380", "A350"],
@@ -123,7 +148,6 @@ CATALOG = {
         "Airbus": ["H160", "H145", "Ecureuil"],
         "Bell": ["206 JetRanger", "429"]
     },
-    # ANIMAUX (Listes simples)
     "Cheval": ["Shetland", "Pur-Sang Arabe", "Frison", "Percheron", "Mustang", "Selle Français"],
     "Âne": ["Âne du Poitou", "Âne de Provence", "Âne des Pyrénées", "Grand Noir du Berry"],
     "Dragon": ["Rouge de Feu", "Noir des Abysses", "Vert des Forêts", "Doré Impérial", "Blanc des Glaces"],
@@ -774,9 +798,28 @@ elif selected == "Louer un véhicule":
                                 # 2. Ajout au système
                                 system.rentals.append(new_rental)
                                 save_data()
+
+                                type_vehicule = v.__class__.__name__
+
+                                v_class = v.__class__.__name__
+                                sound_to_play = "succes"
+
+                                class_to_key = {
+                                    "Car": "Voiture", "Truck": "Camion", "Dragon": "Dragon", 
+                                    "Horse": "Cheval", "Donkey": "Âne", "Boat": "Bateau",
+                                    "Submarine": "Sous-Marin", "Plane": "Avion"
+                                }
+
+                                if v_class in class_to_key:
+                                    key = class_to_key[v_class]
+                                    if key in SOUND_MAP:
+                                        sound_to_play = SOUND_MAP[key]
+
+                                play_sound(sound_to_play)
+
                                 
                                 st.success("✅ Réservation validée !")
-                                time.sleep(1)
+                                time.sleep(2.5)
                                 st.rerun()
                                 
                             except ValueError as e:
@@ -1034,10 +1077,10 @@ elif selected == "Gestion Flotte":
                 system.add_vehicle(obj)
                 save_data()
 
-                anim_name = "Voiture"
-                if v_type in ["Dragon", "Cheval"]: anim_name = v_type
-                lottie = st.session_state.lottie_cache.get(anim_name, st.session_state.lottie_cache.get("default"))
-                if lottie: st_lottie(lottie, height=150, key=f"anim_add_{new_id}")
+                if v_type in SOUND_MAP:
+                    play_sound(SOUND_MAP[v_type])
+                else:
+                    play_sound("succes")
 
                 st.success(f"✅ **{v_type}** ajouté avec succès !")
                 time.sleep(1.5)
