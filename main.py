@@ -36,7 +36,7 @@ def main():
         choice = Prompt.ask("Votre choix ", choices=["1", "2", "3", "4", "0"])
         
         if choice == "1":
-            fleet_ui.show_main_menu(system.fleet)
+            fleet_ui.show_main_menu(system, storage)
             
         elif choice == "2":
             clients_ui.menu_clients(system)

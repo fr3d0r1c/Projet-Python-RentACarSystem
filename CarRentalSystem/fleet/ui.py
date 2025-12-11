@@ -11,10 +11,12 @@ from rich.box import ROUNDED
 # Imports de vos classes
 from datetime import date
 # 👇 MODIFICATION DES IMPORTS
+from CarRentalSystem import fleet, storage
 from fleet.vehicles import Car, Truck, Motorcycle, Hearse, GoKart, Carriage, Cart, Boat, Plane, Helicopter, Submarine, MotorizedVehicle, TowedVehicle
 from fleet.animals import Horse, Donkey, Camel, Whale, Eagle, Dragon, Dolphin, TransportAnimal
 from fleet.maintenance import Maintenance
 from fleet.enums import MaintenanceType, VehicleStatus
+from location import system
 
 # Initialisation de la console Rich
 console = Console()
@@ -78,8 +80,7 @@ def ask_text(msg):
     return Prompt.ask(f"[bold cyan]{msg}[/]")
 
 # --- 📋 MENU PRINCIPAL VISUEL ---
-def show_main_menu():
-    # clear_screen() # Décommentez si vous voulez effacer l'écran à chaque fois
+def show_main_menu(system, storage):
     menu_text = """
 [bold green]1.[/] 📋 Voir la flotte (Tableau)
 [bold green]2.[/] ➕ Ajouter un élément
@@ -88,9 +89,28 @@ def show_main_menu():
 [bold green]5.[/] 🗑️ Supprimer un élément
 [bold cyan]6.[/] 🔍 Voir Détails (Fiche)
 [bold magenta]7.[/] 📊 Stats & Recherche
-[bold red]8.[/] 💾 Sauvegarder et Quitter
+[bold red]8.[/] 💾 Sauvegarder et Quitter 
     """
     console.print(Panel(menu_text, title="[bold blue]GESTION DE FLOTTE[/]", subtitle="Terre • Air • Mer", expand=False))
+
+    fleet = system.fleet
+
+    while True:
+        choice = Prompt.ask("Action Garage", choices=["1", "2", "3", "4", "5", "6", "7", "0"])
+
+        if choice == '0': break
+        elif choice == '1' : list_fleet(fleet)
+        elif choice == '2' : add_menu_by_environment(fleet)
+        elif choice == '3' : maintenance_menu(fleet)
+        elif choice == '4' : harness_menu(fleet)
+        elif choice == '5' : delete_menu(fleet)
+        elif choice == '6' : show_single_vehicle_details(fleet)
+        elif choice == '7' : statistics_menu(fleet)
+        elif choice == '8':
+            storage.save_system(system)
+            console.print("[bold green]💾 Système sauvegardé ! Retour au menu principal.[/]")
+            Prompt.ask("Entrée pour continuer...")
+            break
 
 def show_single_vehicle_details(fleet):
     target_id = ask_int("Entrez l'ID de l'élément à inspecter")

@@ -5,7 +5,7 @@ import os
 import time
 import json
 import base64
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from streamlit_option_menu import option_menu
 from streamlit_lottie import st_lottie
 
@@ -143,7 +143,7 @@ THEMES = {
         "card_bg": "#FFFFFF",
         "sidebar_text": "#1D3557",
         "border_color": "#D1D5DB",
-        "shadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        "shadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
         "accent": "#E63946"
     },
     "🌙 Sombre (Nuit)": {
@@ -161,7 +161,7 @@ THEMES = {
         "sec_bg_color": "#2D0A0A",
         "text_color": "#FFD700",
         "card_bg": "#3B0000",
-        "sidebar_text": "#FF4444",
+        "sidebar_text": "#FFD700",
         "border_color": "#500000",
         "shadow": "0 0 15px rgba(255, 0, 0, 0.3)",
         "accent": "#FF0000"
@@ -189,111 +189,83 @@ def play_sound(sound_name):
         print(f"Erreur audio: {e}")
         
 def apply_theme(theme_name):
+
+    t_name = st.session_state.get('current_theme', "☀️ Clair")
+    if t_name not in THEMES: t_name = "☀️ Clair"
+
     t = THEMES[theme_name]
-    font_url = "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
 
     css = f"""
     <style>
-        @import url('{font_url}');
+        /* FOND ET TEXTE GLOBAL */
         .stApp {{
             background-color: {t['bg_color']};
             color: {t['text_color']};
-            font-family: 'Poppins', sans-serif;
         }}
-        /* --- SIDEBAR --- */
+        
+        /* SIDEBAR */
         section[data-testid="stSidebar"] {{
             background-color: {t['sec_bg_color']};
             border-right: 1px solid {t['border_color']};
         }}
-        section[data-testid="stSidebar"] * {{
-            color: {t['sidebar_text']} !important;
-        }}
-        h1, h2, h3, h4 {{
+        
+        /* TITRES H1, H2, etc. */
+        h1, h2, h3, h4, h5, h6 {{
             color: {t['text_color']} !important;
         }}
         
-        /* ================================================== */
-        /* CORRECTIF VISIBILITÉ TEXTE (INPUTS & SEARCH)       */
-        /* ================================================== */
-        
-        /* 1. La boîte de l'input */
-        .stTextInput > div > div, .stNumberInput > div > div {{
-            background-color: {t['card_bg']} !important;
-            border: 1px solid {t['border_color']} !important;
+        /* CARTES ET CONTENEURS */
+        div[data-testid="stMetric"], div[data-testid="stExpander"], div.stContainer {{
+            background-color: {t['card_bg']};
             border-radius: 10px;
+            border: 1px solid {t['border_color']};
+            box-shadow: {t['shadow']};
         }}
+        
+        /* ============================================================ */
+        /* 👇 C'EST ICI QUE LA MAGIE OPÈRE POUR VOS CHAMPS 👇 */
+        /* ============================================================ */
 
-        /* 2. Le texte tapé à l'intérieur */
-        .stTextInput input, .stNumberInput input {{
-            color: {t['text_color']} !important;
-            -webkit-text-fill-color: {t['text_color']} !important; /* Force Chrome/Safari */
-            caret-color: {t['text_color']} !important; /* Couleur du curseur clignotant */
-        }}
-
-        /* 3. Le Placeholder (ex: "Rechercher...") */
-        .stTextInput input::placeholder {{
-            color: {t['text_color']} !important;
-            opacity: 0.5 !important;
-            -webkit-text-fill-color: {t['text_color']} !important;
-        }}
-
-        /* 4. Les Labels au-dessus */
+        /* 1. COULEUR DES TITRES (LABELS) AU-DESSUS DES CHAMPS */
+        /* On utilise la couleur 'accent' (ex: Rouge) pour les titres, ou 'text_color' (Jaune) */
         div[data-testid="stWidgetLabel"] p, label p {{
-            color: {t['text_color']} !important;
+            color: {t['accent']} !important;  /* <-- Mettez t['text_color'] si vous préférez du jaune */
             font-weight: 600;
         }}
 
-        /* --- SELECTBOX (Menu Déroulant) --- */
-        div[data-baseweb="select"] > div {{
-            background-color: {t['card_bg']} !important;
-            border: 1px solid {t['border_color']} !important;
+        /* 2. COULEUR DU TEXTE À L'INTÉRIEUR DES INPUTS */
+        .stTextInput input, .stNumberInput input {{
+            color: {t['text_color']} !important;
+            caret-color: {t['text_color']} !important; /* Curseur qui clignote */
         }}
+        
+        /* 3. COULEUR DU PLACEHOLDER (Texte gris "Ex: Dragon...") */
+        .stTextInput input::placeholder {{
+            color: {t['text_color']} !important;
+            opacity: 0.6; /* Un peu transparent */
+        }}
+
+        /* 4. COULEUR DU TEXTE DANS LES SELECTBOX */
         div[data-baseweb="select"] span {{
             color: {t['text_color']} !important;
         }}
-        /* Icône flèche */
+        /* L'icône flèche du selectbox */
         div[data-baseweb="select"] svg {{
             fill: {t['text_color']} !important;
         }}
 
-        /* --- CARTES & CONTENEURS --- */
-        div[data-testid="stMetric"], div[data-testid="stVerticalBlockBorderWrapper"] > div {{
-            background-color: {t['card_bg']};
-            border: 1px solid {t['border_color']};
-            border-radius: 16px;
-            box-shadow: {t['shadow']};
-        }}
-        div[data-testid="stMetricLabel"] p {{ color: {t['text_color']}; opacity: 0.7; }}
-        div[data-testid="stMetricValue"] div {{ color: {t['text_color']}; }}
+        /* ============================================================ */
 
-        /* --- BOUTONS --- */
-        div.stButton > button {{
-            background: linear-gradient(135deg, {t['accent']} 0%, {t['accent']}DD 100%);
-            color: #FFFFFF !important;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-        }}
-
-        /* --- EXPANDER FIX (Encore une fois pour être sûr) --- */
-        details[data-testid="stExpander"] {{
-            background-color: {t['card_bg']} !important;
-            border: 1px solid {t['border_color']} !important;
-            color: {t['text_color']} !important;
-        }}
-        summary[data-testid="stExpanderDetails"] {{
-            color: {t['text_color']} !important;
-            background-color: {t['bg_color']} !important;
-        }}
+        /* TEXTES DANS LES CARTES (Métriques) */
+        div[data-testid="stMetricLabel"] p {{ color: {t['text_color']} !important; opacity: 0.8; }}
+        div[data-testid="stMetricValue"] div {{ color: {t['text_color']} !important; }}
         
-        /* --- ELEMENTS PERSO --- */
-        .client-avatar {{ border: 3px solid {t['accent']}; }}
-        .price-tag {{ color: {t['text_color']}; }}
-        .badge {{ padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; display: inline-block; margin-bottom: 8px; }}
-        .badge-green {{ background-color: #D4EDDA; color: #155724; border: 1px solid #C3E6CB; }}
-        .badge-yellow {{ background-color: #FFF3CD; color: #856404; border: 1px solid #FFEEBA; }}
-        .badge-red {{ background-color: #F8D7DA; color: #721C24; border: 1px solid #F5C6CB; }}
-        .badge-grey {{ background-color: #E2E3E5; color: #383D41; border: 1px solid #D6D8DB; }}
+        /* BOUTONS */
+        div.stButton > button {{
+            background-color: {t['accent']};
+            color: white !important;
+            border: none;
+        }}
     </style>
     """
     st.markdown(css, unsafe_allow_html=True)
@@ -335,7 +307,9 @@ def page_locations(system):
         d_end = c_date2.date_input("Date de fin prévue", value="today")
 
         if st.button("Valider la Location", type="primary"):
-            # IMPORTANT : Conversion des dates Streamlit (Date) -> String pour votre classe
+
+            from api_client import post_rental
+
             s_str = d_start.strftime("%Y-%m-%d")
             e_str = d_end.strftime("%Y-%m-%d")
 
@@ -420,6 +394,33 @@ def page_locations(system):
                     "Coût": f"{r.total_cost} €" if not r.is_active else "En cours"
                 })
             st.dataframe(data)
+
+API_URL = "http://127.0.0.1:8000"
+
+def get_all_fleet():
+    try:
+        response = requests.get(f"{API_URL}/fleet")
+        if response.status_code == 200:
+            return response.json()
+    except:
+        return []
+    return []
+
+def post_rental(customer_id, vehicle_id, start_str, end_str):
+    payload = {
+        "customer_id": customer_id,
+        "vehicle_id": vehicle_id,
+        "start_date": start_str,
+        "end_date": end_str
+    }
+    try:
+        response = requests.post(f"{API_URL}/rentals/", json=payload)
+        if response.status_code == 200:
+            return True, response.json()
+        else:
+            return False, response.json()['detail']
+    except Exception as e:
+        return False, str(e)
 
 # =========================================================
 # 3. INITIALISATION SESSION
@@ -539,7 +540,7 @@ elif st.session_state.user_role == "client":
 
 else:
     menu_opts = common_opts
-    menu_icons = common_icon
+    menu_icons = common_icons
     
 with st.sidebar:
     st.title("Navigation")
@@ -554,24 +555,22 @@ with st.sidebar:
         menu_title=None, options=menu_opts, icons=menu_icons, default_index=default_idx,
         styles={
             "container": {
-            "padding": "0!important", 
-            "background-color": THEMES[st.session_state.current_theme]['sec_bg_color']
+                "padding": "0!important", 
+                "background-color": THEMES[st.session_state.current_theme]['sec_bg_color']
             },
             "icon": {
-            "color": THEMES[st.session_state.current_theme]['accent'], 
-            "font-size": "18px"
-        }, 
-        "nav-link": {
-            "font-size": "16px", 
-            "text-align": "left", 
-            "margin":"0px", 
-            # 👇 C'EST CETTE LIGNE QUI CORRIGE LA VISIBILITÉ DU TEXTE 👇
-            "color": THEMES[st.session_state.current_theme]['sidebar_text'] 
-        },
-        "nav-link-selected": {
-            "background-color": THEMES[st.session_state.current_theme]['accent'], 
-            "color": "#FFFFFF"
-        }
+                "font-size": "18px"
+            }, 
+            "nav-link": {
+                "font-size": "16px", 
+                "text-align": "left", 
+                "margin":"0px", 
+                "color": THEMES[st.session_state.current_theme]['sidebar_text']
+            },
+            "nav-link-selected": {
+                "background-color": THEMES[st.session_state.current_theme]['accent'], 
+                "color": "#FFFFFF"
+            }
         }
     )
     
@@ -616,19 +615,19 @@ if selected == "Accueil":
     team1, team2, team3 = st.columns(3)
 
     with team1:
-        st.image("https://api.dicebear.com/7.x/avataaars/svg?seed=Maxence", width=100)
+        st.image("https://api.dicebear.com/7.x/avataaars/svg?seed=maxence", width=100)
         st.markdown("**Maxence PARISSE**")
         st.caption("PDG & Fondateur")
 
     with team3:
-        st.image("https://api.dicebear.com/7.x/avataaars/svg?seed=Clémence", width=100)
+        st.image("assets/images/CC.png", width=100)
         st.markdown("**Clémence CHARLES**")
-        st.caption("Directeur Vétérinaire")
+        st.caption("Directrice Vétérinaire & Dresseuse")
 
     with team2:
-        st.image("https://api.dicebear.com/7.x/avataaars/svg?seed=Frédéric", width=100)
-        st.markdown("**Frédéric ALLERON**")
-        st.caption("Cheffe de la Sécurité & Responsable Flotte Marine")
+        st.image("assets/images/ludovic.jpg", width=100)
+        st.markdown("**Ludovic ALLERON**")
+        st.caption("Chef de la Sécurité & Responsable Flotte Marine")
 
 elif selected == "Catalogue Public":
     st.title("🚗 Notre Catalogue")
@@ -1293,10 +1292,11 @@ elif selected == "Atelier":
         else:
             st.info("Aucun historique disponible.")
 
-elif selected == "Base Clients":
+elif selected == "Clients":
     if st.session_state.user_role != "admin": st.error("Accès Admin requis."); st.stop()
-    st.title("👥 Clients")
-    st.dataframe(pd.DataFrame([c.to_table_row() for c in system.customers]), use_container_width=True)
+    st.title("👥 Base Clients")
+    for c in system.customers:
+        st.text(f"ID {c.id} : {c.name} ({c.email}) - {c.driver_license}")
 
 elif selected == "Locations Admin":
     if st.session_state.user_role != "admin": st.error("Accès Admin requis."); st.stop()
