@@ -902,10 +902,50 @@ elif selected == "Mes Locations":
 elif selected == "Dashboard":
     if st.session_state.user_role != "admin": st.error("Accès Admin requis."); st.stop()
     st.title("📊 Tableau de Bord")
-    k1, k2, k3 = st.columns(3)
+    k1, k2 = st.columns(2)
     k1.metric("CA Total", f"{sum(r.total_price for r in system.rentals)}€")
-    k2.metric("Parc", len(system.fleet))
-    k3.metric("Clients", len(system.customers))
+    k2.metric("Clients", len(system.customers))
+    st.markdown("---")
+    k3, k4 = st.columns(2)
+    with k3:
+        st.subheader("🔴 Loués / Indisponibles")
+        data_loues = []
+        for v in system.fleet:
+            if v.status != VehicleStatus.AVAILABLE: # On prend tout ce qui n'est pas dispo
+                # 1. Récupération sécurisée du Nom (Marque ou Name)
+                nom = getattr(v, 'brand', getattr(v, 'name', 'Inconnu'))
+                # 2. Récupération sécurisée du Modèle (Model ou Breed)
+                modele = getattr(v, 'model', getattr(v, 'breed', ''))
+                # 3. Récupération du Type (Nom de la classe)
+                v_type = v.__class__.__name__
+
+                data_loues.append({
+                    "Type": v_type, 
+                    "Véhicule": f"{nom} {modele}"
+                })
+        if data_loues:
+            st.dataframe(pd.DataFrame(data_loues), use_container_width=True, hide_index=True)
+        else:
+            st.info("Aucun véhicule loué.")
+
+    with k4:
+        st.subheader("🟢 Disponibles")
+        data_dispo = []
+        for v in system.fleet:
+            if v.status == VehicleStatus.AVAILABLE:
+                # Même logique sécurisée ici
+                nom = getattr(v, 'brand', getattr(v, 'name', 'Inconnu'))
+                modele = getattr(v, 'model', getattr(v, 'breed', ''))
+                v_type = v.__class__.__name__
+
+                data_dispo.append({
+                    "Type": v_type, 
+                    "Véhicule": f"{nom} {modele}"
+                })
+        if data_dispo:
+            st.dataframe(pd.DataFrame(data_dispo), use_container_width=True, hide_index=True)
+        else:
+            st.warning("Aucun véhicule disponible.")
 
 elif selected == "Gestion Flotte":
     st.title("🚜 Gestion du Parc")
