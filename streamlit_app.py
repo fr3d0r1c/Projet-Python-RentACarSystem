@@ -41,7 +41,7 @@ from fleet.transport_base import MotorizedVehicle, TransportAnimal, TowedVehicle
 SOUND_MAP = {
     "Voiture": "voiture",
     "Camion": "camion",      
-    "Dragon": "dragon",        
+    "Dragon": "dragon.aiff",        
     "Cheval": "cheval",
     "Âne": "ane",
     "Bateau": "bateau_klaxon",

@@ -1,8 +1,12 @@
 import sys
 import os
 from rich.console import Console
+from rich.table import Table
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Prompt, IntPrompt, FloatPrompt, Confirm
+from rich import print as rprint
+from rich.columns import Columns
+from rich.box import ROUNDED
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(current_dir, "CarRentalSystem"))
