@@ -168,9 +168,11 @@ THEMES = {
     }
 }
 
-def play_sound(sound_name):
+def play_sound(sound_key):
+    sound_name = SOUND_MAP.get(sound_key, "Succes")
+
     sound_file = os.path.join(current_dir, "assets", "sounds", f"{sound_name}.mp3")
-    
+
     if not os.path.exists(sound_file):
         return
     
@@ -186,8 +188,19 @@ def play_sound(sound_name):
             """
             st.markdown(md, unsafe_allow_html=True)
     except Exception as e:
-        print(f"Erreur audio: {e}")
-        
+        print(f"Erreur lors de la lecture audio : {e}")
+
+def get_sound_key_by_object(obj):
+    class_name = obj.__class__.__name__
+
+    if isinstance(obj, Car): return "Voiture"
+    if isinstance(obj, Truck): return "Camion"
+    if isinstance(obj, Dragon): return "Dragon"
+    if isinstance(obj, Horse): return "Cheval"
+    if isinstance(obj, Boat): return "Bateau"
+
+    return "Succes"
+
 def apply_theme(theme_name):
 
     t_name = st.session_state.get('current_theme', "☀️ Clair")
@@ -805,11 +818,7 @@ elif selected == "Louer un véhicule":
                                     "Submarine": "Sous-Marin", "Plane": "Avion"
                                 }
 
-                                if v_class in class_to_key:
-                                    key = class_to_key[v_class]
-                                    if key in SOUND_MAP:
-                                        sound_to_play = SOUND_MAP[key]
-
+                                sound_key = get_sound_key_by_object(v)
                                 play_sound(sound_to_play)
 
                                 
@@ -890,14 +899,6 @@ elif selected == "Mes Locations":
 
             
 # --- 3. PAGES ADMIN (SÉCURISÉES) ---
-elif selected == "Dashboard":
-    if st.session_state.user_role != "admin": st.error("Accès Admin requis."); st.stop()
-    st.title("📊 Tableau de Bord")
-    k1, k2, k3 = st.columns(3)
-    k1.metric("CA Total", f"{sum(r.total_price for r in system.rentals)}€")
-    k2.metric("Parc", len(system.fleet))
-    k3.metric("Clients", len(system.customers))
-
 elif selected == "Dashboard":
     if st.session_state.user_role != "admin": st.error("Accès Admin requis."); st.stop()
     st.title("📊 Tableau de Bord")
@@ -1080,10 +1081,8 @@ elif selected == "Gestion Flotte":
                 system.add_vehicle(obj)
                 save_data()
 
-                if v_type in SOUND_MAP:
-                    play_sound(SOUND_MAP[v_type])
-                else:
-                    play_sound("succes")
+                sound_key = get_sound_key_by_object(obj)
+                play_sound(sound_key)
 
                 st.success(f"✅ **{v_type}** ajouté avec succès !")
                 time.sleep(1.5)
