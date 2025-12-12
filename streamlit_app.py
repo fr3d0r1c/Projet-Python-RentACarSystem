@@ -552,8 +552,8 @@ if st.session_state.user_role == "admin":
     menu_icons = common_icons + ["speedometer2", "car-front", "tools", "people", "clipboard-data"]
     
 elif st.session_state.user_role == "client":
-    menu_opts = common_opts + ["Louer un véhicule", "Mes Locations"]
-    menu_icons = common_icons + ["cart4", "clock-history"]
+    menu_opts = common_opts + ["Louer un véhicule", "Espace Personnel"]
+    menu_icons = common_icons + ["cart4", "person-circle"]
 
 else:
     menu_opts = common_opts
@@ -833,75 +833,127 @@ elif selected == "Louer un véhicule":
                             except ValueError as e:
                                 st.error(f"Erreur : {e}")
 
-elif selected == "Mes Locations":
+elif selected == "Espace Personnel":
     if st.session_state.user_role != "client": st.error("Accès réservé."); st.stop()
-    
-    me = st.session_state.current_user
-    st.title(f"Espace Client : {me.name}")
 
-    # Filtre des locations de CE client
+    me = st.session_state.current_user
+    st.title(f"Espace Personnel de {me.name}")
+
     my_rentals = [r for r in system.rentals if r.customer.id == me.id]
-    
-    # Séparation Actifs / Passés
     active_rentals = [r for r in my_rentals if r.is_active]
     history_rentals = [r for r in my_rentals if not r.is_active]
+    total_spent = sum(r.total_cost for r in history_rentals)
 
-    tab_active, tab_hist = st.tabs(["🟢 En cours", "📜 Historique"])
+    tab_active, tab_hist, tab_profile = st.tabs(["🔑 Locations en Cours", "📜 Historique", "⚙️ Mon Profil"])
 
-    # --- LISTE DES LOCATIONS ACTIVES (POUR RETOUR) ---
     with tab_active:
+        st.subheader("Véhicules à rendre")
         if not active_rentals:
-            st.info("Vous n'avez aucune location en cours.")
+            st.info("Vous n'avez aucune location en cours. Profitez-en pour louer un Dragon !")
+            if st.button("Louer un véhicule maintenant"):
+                st.switch_page("streamlit_app.py")
         else:
             for r in active_rentals:
                 with st.expander(f"🚗 {r.vehicle.brand} {r.vehicle.model} (Retour prévu : {r.end_date.date()})", expanded=True):
                     c1, c2 = st.columns([2, 1])
-                    
                     with c1:
                         st.write(f"**Début :** {r.start_date.date()}")
                         st.write(f"**Fin prévue :** {r.end_date.date()}")
-                        st.write(f"**Coût journalier :** {r.vehicle.daily_rate}€")
                         st.info(f"💰 Coût estimé actuel : **{r.calculate_cost()} €**")
-
                     with c2:
-                        st.markdown("#### ↩️ Retourner le véhicule")
-                        d_return = st.date_input("Date de retour réel", value=date.today(), key=f"ret_date_{r.id}")
-                        
+                        d_return = st.date_input("Date de retour", value=date.today(), key=f"ret_{r.id}")
                         if st.button("Valider le retour", key=f"btn_ret_{r.id}", type="primary"):
                             ret_str = d_return.strftime("%Y-%m-%d")
                             try:
-                                # Appel de la méthode métier
-                                final_cost = r.close_rental(ret_str)
+                                final = r.close_rental(ret_str)
                                 save_data()
-                                
                                 st.balloons()
-                                st.success(f"Véhicule rendu ! Prix final : {final_cost} €")
-                                
-                                if r.penalty > 0:
-                                    st.warning(f"⚠️ Pénalité de retard incluse : {r.penalty} €")
-                                
+                                st.success(f"Retour confirmé ! Total : {final} €")
+                                if r.penalty > 0: st.warning(f"Pénalité retard : {r.penalty} €")
                                 time.sleep(2)
                                 st.rerun()
-                            except ValueError as e:
-                                st.error(f"Erreur date : {e}")
-
-    # --- HISTORIQUE ---
+                            except ValueError as e: st.error(str(e))
+    
     with tab_hist:
+        st.subheader("Mes aventures passées")
+        c1, c2 = st.columns(2)
+        c1.metric("Total Locations", len(history_rentals))
+        c2.metric("Budget Total", f"{total_spent} €")
+
         if not history_rentals:
             st.caption("Aucun historique.")
         else:
-            data_hist = []
+            data = []
             for r in history_rentals:
-                data_hist.append({
+                data.append({
                     "Véhicule": f"{r.vehicle.brand} {r.vehicle.model}",
-                    "Du": r.start_date.date(),
-                    "Au": r.actual_return_date.date() if r.actual_return_date else "N/A",
-                    "Total Payé": f"{r.total_cost} €",
-                    "Pénalité": f"{r.penalty} €" if r.penalty > 0 else "-"
+                    "Période": f"{r.start_date.date()} -> {r.actual_return_date.date()}",
+                    "Coût": f"{r.total_cost} €"
                 })
-            st.dataframe(pd.DataFrame(data_hist), use_container_width=True)
+            st.dataframe(pd.DataFrame(data), use_container_width=True)
 
+    with tab_profile:
+        st.subheader("Mes Informations")
+        
+        # On utilise un formulaire pour ne pas recharger la page à chaque lettre tapée
+        with st.form("profile_form"):
+            col_info, col_img = st.columns([3, 1])
             
+            with col_info:
+                # Les champs sont pré-remplis avec les infos actuelles (value=me.x)
+                # On retire 'disabled=True' pour les rendre modifiables
+                new_name = st.text_input("Nom Complet", value=me.name)
+                new_email = st.text_input("Email", value=me.email)
+                new_phone = st.text_input("Téléphone", value=me.phone)
+                new_license = st.text_input("Numéro de Permis", value=me.driver_license)
+                
+                # L'identifiant reste souvent fixe pour éviter les conflits, on le laisse gris
+                st.text_input("Identifiant (Non modifiable)", value=me.username, disabled=True)
+            
+            with col_img:
+                # L'avatar se mettra à jour si le nom change !
+                st.image(f"https://api.dicebear.com/7.x/avataaars/svg?seed={me.name}", width=150)
+                st.caption("Votre avatar unique")
+
+            # Bouton de validation du formulaire
+            if st.form_submit_button("💾 Enregistrer les modifications", type="primary"):
+                # 1. Mise à jour de l'objet Client en mémoire
+                me.name = new_name
+                me.email = new_email
+                me.phone = new_phone
+                me.driver_license = new_license
+                
+                # 2. Sauvegarde dans le fichier JSON
+                save_data()
+                
+                # 3. Feedback et rechargement
+                st.success("Profil mis à jour avec succès !")
+                time.sleep(1)
+                st.rerun() # Force le rafraîchissement pour voir les changements partout
+
+        st.markdown("---")
+        st.subheader("Zone de Danger")
+        with st.expander("🗑️ Supprimer mon compte", expanded=False):
+            st.warning("Cette action est irréversible. Toutes vos données seront effacées.")
+            
+            if active_rentals:
+                st.error("⛔ Impossible de supprimer le compte : Vous avez des locations en cours.")
+            else:
+                confirm_del = st.checkbox("Je confirme vouloir supprimer mon compte.")
+                if st.button("CONFIRMER LA SUPPRESSION", type="primary", disabled=not confirm_del):
+                    if me in system.customers:
+                        system.customers.remove(me)
+                        save_data()
+                        
+                        st.session_state.authenticated = False
+                        st.session_state.user_role = None
+                        st.session_state.current_user = None
+                        
+                        st.success("Compte supprimé. Au revoir !")
+                        time.sleep(2)
+                        st.rerun()
+
+        
 # --- 3. PAGES ADMIN (SÉCURISÉES) ---
 elif selected == "Dashboard":
     if st.session_state.user_role != "admin": st.error("Accès Admin requis."); st.stop()

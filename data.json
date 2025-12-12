@@ -144,6 +144,16 @@
             "has_ac": true
         }
     ],
-    "customers": [],
+    "customers": [
+        {
+            "id": 1,
+            "name": "Parisse Maxence",
+            "driver_license": "A086578",
+            "email": "",
+            "phone": "",
+            "username": "falleron",
+            "password": "Pipi"
+        }
+    ],
     "rentals": []
 }
