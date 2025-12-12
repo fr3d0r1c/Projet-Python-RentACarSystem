@@ -400,27 +400,54 @@ if st.session_state.show_login and not st.session_state.authenticated:
                         time.sleep(0.5); st.rerun()
                     else:
                         st.error("Inconnu ou mauvais mot de passe.")
-
+                        
         with tabs_log[1]:
             st.caption("Créez votre compte pour louer nos véhicules.")
-            nu = st.text_input("Choisir Identifiant *")
-            np = st.text_input("Choisir Mot de passe *", type="password")
-            nn = st.text_input("Nom Prénom *")
-            nperm = st.text_input("Permis")
-            if st.button("Créer Compte", use_container_width=True):
-                if nu and np and nn:
+            
+            # --- 1. Informations Personnelles (sur 2 colonnes) ---
+            c_perso1, c_perso2 = st.columns(2)
+            
+            with c_perso1:
+                nn = st.text_input("Nom & Prénom *", placeholder="Ex: Jean Dupont")
+                n_email = st.text_input("Email *", placeholder="jean@mail.com")
+            
+            with c_perso2:
+                n_phone = st.text_input("Téléphone *", placeholder="06 12 34 56 78")
+                nperm = st.text_input("Numéro de Permis", placeholder="B-123456 (Optionnel)")
+
+            st.markdown("---")
+
+            # --- 2. Identifiants de Connexion (sur 2 colonnes) ---
+            c_login1, c_login2 = st.columns(2)
+            
+            with c_login1:
+                nu = st.text_input("Choisir Identifiant *", placeholder="jdupont")
+            with c_login2:
+                np = st.text_input("Choisir Mot de passe *", type="password")
+
+            # --- 3. Validation ---
+            if st.button("✨ Créer mon Compte", use_container_width=True, type="primary"):
+                # Vérification des champs obligatoires
+                if nu and np and nn and n_email and n_phone:
+                    
+                    # Vérification d'unicité de l'identifiant
                     if any(c.username == nu for c in system.customers):
-                        st.error("Identifiant déjà pris.")
+                        st.error("Cet identifiant est déjà pris. Veuillez en choisir un autre.")
+                    
                     else:
-                        nid = 1 if not system.customers else max(c.id for c in system.customers)+1
-                        new_c = Customer(nid, nn, nperm, "", "", nu, np)
+                        # Génération ID
+                        nid = 1 if not system.customers else max(c.id for c in system.customers) + 1
+                        
+                        # Création du client avec TOUS les champs
+                        new_c = Customer(nid, nn, nperm, n_email, n_phone, nu, np)
+                        
                         system.add_customer(new_c)
                         save_data()
-                        st.success("Compte créé ! Connectez-vous.")
+                        
+                        st.success("✅ Compte créé avec succès ! Connectez-vous dans l'onglet 'Connexion'.")
+                        st.balloons()
                 else:
-                    st.warning("Remplissez les champs obligatoires.")
-    st.markdown("---")
-
+                    st.warning("⚠️ Veuillez remplir tous les champs marqués d'une étoile (*).")
 # =========================================================
 # 5. NAVIGATION & CONTENU (MULTI-ROLES)
 # =========================================================
