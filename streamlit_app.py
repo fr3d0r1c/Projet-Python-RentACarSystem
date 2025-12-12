@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import sys
 import os
+import requests
 import time
 import json
 import base64
@@ -287,126 +288,6 @@ def load_lottiefile(filepath: str):
     try:
         with open(filepath, "r", encoding='utf-8') as f: return json.load(f)
     except FileNotFoundError: return None
-
-def page_locations(system):
-    """Page de gestion des locations pour Streamlit."""
-    st.title("📝 Comptoir Locations")
-
-    # Création de 3 onglets pour organiser la page
-    tab_new, tab_return, tab_list = st.tabs(["🔑 Nouvelle Location", "↩️ Retour Véhicule", "📜 Contrats en cours"])
-
-    # --- ONGLET 1 : NOUVELLE LOCATION ---
-    with tab_new:
-        st.subheader("Ouvrir un nouveau dossier")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            # Sélection du Client (Affiche le nom, renvoie l'objet)
-            client_options = {f"{c.name} (ID: {c.id})": c for c in system.customers}
-            selected_client_name = st.selectbox("Client", options=list(client_options.keys()))
-            client = client_options.get(selected_client_name)
-
-        with col2:
-            # Sélection du Véhicule (Filtrer ceux qui sont disponibles ?)
-            # On affiche Marque Modèle et Prix
-            veh_options = {f"{v.brand} {v.model} ({v.daily_rate}€/j)": v for v in system.fleet}
-            selected_veh_name = st.selectbox("Véhicule", options=list(veh_options.keys()))
-            vehicle = veh_options.get(selected_veh_name)
-
-        # Sélection des dates
-        c_date1, c_date2 = st.columns(2)
-        d_start = c_date1.date_input("Date de début", value="today")
-        d_end = c_date2.date_input("Date de fin prévue", value="today")
-
-        if st.button("Valider la Location", type="primary"):
-
-            from api_client import post_rental
-
-            s_str = d_start.strftime("%Y-%m-%d")
-            e_str = d_end.strftime("%Y-%m-%d")
-
-            try:
-                # 1. Création de l'objet Rental (La validation se fait ici)
-                new_rental = Rental(client, vehicle, s_str, e_str)
-                
-                # 2. Ajout au système
-                system.rentals.append(new_rental)
-                
-                # 3. Feedback visuel
-                st.success(f"Location validée pour {client.name} !")
-                
-                # Affichage joli du coût
-                cout = new_rental.calculate_cost()
-                st.metric(label="Coût Estimé (à payer au retour)", value=f"{cout} €")
-                
-                # Petit effet visuel : rafraîchir pour que le véhicule disparaisse de la liste dispo (optionnel)
-                # st.rerun() 
-
-            except ValueError as e:
-                st.error(f"Impossible de créer la location : {e}")
-
-    # --- ONGLET 2 : RETOUR VÉHICULE ---
-    with tab_return:
-        st.subheader("Clôturer un contrat")
-        
-        # On filtre pour n'avoir que les locations actives
-        active_rentals = [r for r in system.rentals if r.is_active]
-        
-        if not active_rentals:
-            st.info("Aucune location en cours.")
-        else:
-            # On crée un dictionnaire pour le selectbox
-            rental_opts = {f"{r.vehicle.model} - {r.customer.name} (Fin prévue : {r.end_date.date()})": r for r in active_rentals}
-            selected_rental_name = st.selectbox("Choisir le contrat à clôturer", options=list(rental_opts.keys()))
-            rental_to_close = rental_opts[selected_rental_name]
-
-            st.write("---")
-            st.write(f"**Véhicule :** {rental_to_close.vehicle.brand} {rental_to_close.vehicle.model}")
-            st.write(f"**Date prévue :** {rental_to_close.end_date.date()}")
-            
-            d_return = st.date_input("Date de retour réel", value="today")
-            
-            if st.button("Confirmer le Retour"):
-                ret_str = d_return.strftime("%Y-%m-%d")
-                try:
-                    # Appel de votre méthode close_rental
-                    final_price = rental_to_close.close_rental(ret_str)
-                    
-                    st.balloons() # Petit effet festif
-                    st.success("Véhicule retourné avec succès !")
-                    
-                    # Affichage du prix final avec gestion pénalité
-                    col_p1, col_p2 = st.columns(2)
-                    col_p1.metric("Montant Final", f"{final_price} €")
-                    
-                    if rental_to_close.penalty > 0:
-                        col_p2.error(f"⚠️ Dont Pénalité : {rental_to_close.penalty} €")
-                    else:
-                        col_p2.success("Aucune pénalité")
-
-                except ValueError as e:
-                    st.error(f"Erreur : {e}")
-
-    # --- ONGLET 3 : LISTE ---
-    with tab_list:
-        st.subheader("Historique des Contrats")
-        if not system.rentals:
-            st.write("Vide.")
-        else:
-            # On peut utiliser un DataFrame pour un affichage propre
-            data = []
-            for r in system.rentals:
-                status = "🟢 En cours" if r.is_active else "🔴 Terminé"
-                data.append({
-                    "Statut": status,
-                    "Client": r.customer.name,
-                    "Véhicule": r.vehicle.model,
-                    "Début": r.start_date.date(),
-                    "Fin Prévue": r.end_date.date(),
-                    "Coût": f"{r.total_cost} €" if not r.is_active else "En cours"
-                })
-            st.dataframe(data)
 
 API_URL = "http://127.0.0.1:8000"
 
@@ -1392,7 +1273,7 @@ elif selected == "Atelier":
         else:
             st.info("Aucun historique disponible.")
 
-elif selected == "Clients":
+elif selected == "Base Clients":
     if st.session_state.user_role != "admin": st.error("Accès Admin requis."); st.stop()
     st.title("👥 Base Clients")
     for c in system.customers:
