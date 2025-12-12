@@ -23,7 +23,7 @@ class Rental:
         self.is_active = False
 
         self._validate_rental()
-
+        
         self.is_active = True
         self.vehicle.status = VehicleStatus.RENTED
 
@@ -33,18 +33,15 @@ class Rental:
             raise ValueError(f"Erreur: La date de fin ({self.end_date.date()}) est avant le début.")
         
         if not self.from_history and not self.vehicle.is_available:
-
             nom = getattr(self.vehicle, 'brand', getattr(self.vehicle, 'name', 'Véhicule'))
             modele = getattr(self.vehicle, 'model', getattr(self.vehicle, 'breed', ''))
-            
             raise ValueError(f"Le véhicule {nom} {modele} est déjà loué !")
         
     def calculate_cost(self):
         """Calcule le coût théorique (avant retour réel)."""
         duration = (self.end_date - self.start_date).days
-        days = max(1, duration) # Minimum 1 jour facturé
+        days = max(1, duration)
         
-        # On récupère le prix journalier du véhicule
         return days * self.vehicle.daily_rate
     
     def close_rental(self, return_date_str):
@@ -75,7 +72,7 @@ class Rental:
     
     def to_dict(self):
         return {
-            "id": getattr(self, 'id', 0), # Sécurité si ID manquant
+            "id": getattr(self, 'id', 0),
             "customer_id": self.customer.id, 
             "vehicle_id": self.vehicle.id,
             "start_date": self.start_date.strftime("%Y-%m-%d"),
