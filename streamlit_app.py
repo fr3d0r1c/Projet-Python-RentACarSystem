@@ -745,6 +745,8 @@ elif selected == "Louer un véhicule":
                                 try:
                                     # 1. Création via la classe Rental (Validation incluse)
                                     new_rental = Rental(me, v, s_str, e_str)
+
+                                    new_rental.id = len(system.rentals) + 1
                                     
                                     # 2. Ajout au système
                                     system.rentals.append(new_rental)

@@ -7,6 +7,7 @@ from datetime import datetime
 
 class Rental:
     def __init__(self, customer, vehicle, start_date_str, end_date_str, from_history=False):
+        self.id = 0
         self.customer = customer
         self.vehicle = vehicle
         self.from_history = from_history

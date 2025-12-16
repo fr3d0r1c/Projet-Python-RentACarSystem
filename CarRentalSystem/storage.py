@@ -118,7 +118,7 @@ class StorageManager:
 
                 new_rental = Rental(cust, veh, r["start_date"], r["end_date"], from_history=True)
 
-                new_rental.id = r.get("id", len(system.rentals)+1)
+                new_rental.id = r.get("id", len(system.rentals) + 1)
                 new_rental.is_active = r["is_active"]
                 system.rentals.append(new_rental)
 
