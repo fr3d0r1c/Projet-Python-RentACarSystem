@@ -817,11 +817,16 @@ elif selected == "Espace Personnel":
                             try:
                                 final = r.close_rental(ret_str)
                                 save_data()
+
                                 st.balloons()
-                                st.success(f"Retour confirmé ! Total : {final} €")
-                                if r.penalty > 0: 
-                                    st.warning(f"Pénalité retard : {r.penalty} €")
-                                time.sleep(2)
+                                st.success("Véhicule restitué avec succès !")
+
+                                invoice_text = r.generate_invoice()
+
+                                with st.expander("📄 Voir la Facture", expanded=True):
+                                    st.code(invoice_text, language="text")
+
+                                time.sleep(4)
                                 st.rerun()
                             except ValueError as e: 
                                 st.error(str(e))

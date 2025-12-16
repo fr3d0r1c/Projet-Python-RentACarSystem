@@ -81,3 +81,33 @@ class Rental:
             "is_active": self.is_active, 
             "total_cost": self.total_cost
         }
+
+    def generate_invoice(self):
+        """Génère une facture détaillée sous forme de texte."""
+        if self.is_active:
+            return "❌ La location est encore en cours. Impossible de générer la facture finale."
+
+        days_base = max(1, (self.actual_return_date - self.start_date).days)
+        base_cost = days_base * self.vehicle.daily_rate
+
+        invoice =  "========================================\n"
+        invoice += f"       FACTURE FINALE #{self.id:04d}\n"
+        invoice += "========================================\n"
+        invoice += f"CLIENT   : {self.customer.last_name} {self.customer.first_name}\n"
+        invoice += f"VÉHICULE : {getattr(self.vehicle, 'brand', getattr(self.vehicle, 'name', 'Véhicule'))} {getattr(self.vehicle, 'model', getattr(self.vehicle, 'breed', ''))}\n"
+        invoice += "----------------------------------------\n"
+        invoice += f"Début    : {self.start_date.date()}\n"
+        invoice += f"Fin      : {self.actual_return_date.date()}\n"
+        invoice += f"Durée    : {days_base} jours\n"
+        invoice += "----------------------------------------\n"
+        invoice += f"Tarif journalier : {self.vehicle.daily_rate} €\n"
+        invoice += f"Sous-total       : {base_cost:.2f} €\n"
+
+        if self.penalty > 0:
+            invoice += f"PÉNALITÉ RETARD  : +{self.penalty:.2f} €\n"
+        
+        invoice += "========================================\n"
+        invoice += f"TOTAL À PAYER    : {self.total_cost:.2f} €\n"
+        invoice += "========================================\n"
+        
+        return invoice
