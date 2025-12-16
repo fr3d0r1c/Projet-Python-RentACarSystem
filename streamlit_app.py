@@ -545,12 +545,12 @@ if selected == "Accueil":
         st.caption("PDG & Fondateur")
     
     with team2:
-        st.image("assets/images/exemple.webp", width=100)
+        st.image("assets/images/MP.png", width=100)
         st.markdown("**Maxence PARISSE**")
         st.caption("Conducteur de Calèche/Charette")
 
     with team3:
-        st.image("assets/images/CC.png", width=100)
+        st.image("assets/images/exemple.webp", width=100)
         st.markdown("**Clémence CHARLES**")
         st.caption("Directrice Vétérinaire & Dresseuse")
 
