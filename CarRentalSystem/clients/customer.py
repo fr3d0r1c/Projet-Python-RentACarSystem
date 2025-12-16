@@ -5,7 +5,7 @@ class Customer:
         self.driver_license = driver_license
         self.email = email
         self.phone = phone
-        self.username = username # Nouveau
+        self.username = username
         self.password = password
 
     def show_details(self):
@@ -18,8 +18,8 @@ class Customer:
             "driver_license": self.driver_license,
             "email": self.email,
             "phone": self.phone,
-            "username": self.username, # Sauvegarde
-            "password": self.password  # Sauvegarde
+            "username": self.username,
+            "password": self.password
         }
     
     def to_table_row(self):
