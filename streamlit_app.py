@@ -316,6 +316,24 @@ def post_rental(customer_id, vehicle_id, start_str, end_str):
     except Exception as e:
         return False, str(e)
 
+def check_age_rule(customer_age, vehicle):
+    """Vérifie l'âge minimum requis selon le type de véhicule."""
+    v_type = vehicle.__class__.__name__
+
+    if isinstance(vehicle, MotorizedVehicle) and v_type not in ["Karting"]:
+        if customer_age < 18:
+            return False, "Âge minimum requis pour la location motorisée : 18 ans."
+
+    if isinstance(vehicle, TransportAnimal):
+        if customer_age < 16:
+            return False, "Âge minimum requis pour la location d'animaux : 16 ans."
+
+    if v_type in ["Truck", "Plane", "Submarine", "Dragon"]:
+        if customer_age < 21:
+            return False, "Âge minimum requis pour ce type de véhicule spécialisé : 21 ans."
+    
+    return True, None
+
 # =========================================================
 # 3. INITIALISATION SESSION
 # =========================================================
@@ -408,12 +426,14 @@ if st.session_state.show_login and not st.session_state.authenticated:
             c_perso1, c_perso2 = st.columns(2)
             
             with c_perso1:
-                nn = st.text_input("Nom & Prénom *", placeholder="Ex: Jean Dupont")
+                nf = st.text_input("Prénom *", placeholder="Ex: Jean")
+                nl = st.text_input("Nom de Famille *", placeholder="Ex: Dupont")
                 n_email = st.text_input("Email *", placeholder="jean@mail.com")
             
             with c_perso2:
+                n_age = st.number_input("Âge *", min_value=12, max_value=150, value=25)
                 n_phone = st.text_input("Téléphone *", placeholder="06 12 34 56 78")
-                nperm = st.text_input("Numéro de Permis", placeholder="B-123456 (Optionnel)")
+                nperm = st.text_input("Numéro de Permis *", placeholder="Ex: B-123456")
 
             st.markdown("---")
 
@@ -428,18 +448,15 @@ if st.session_state.show_login and not st.session_state.authenticated:
             # --- 3. Validation ---
             if st.button("✨ Créer mon Compte", use_container_width=True, type="primary"):
                 # Vérification des champs obligatoires
-                if nu and np and nn and n_email and n_phone:
-                    
-                    # Vérification d'unicité de l'identifiant
+                if nu and np and nf and nl and n_email and n_phone and nperm:
                     if any(c.username == nu for c in system.customers):
                         st.error("Cet identifiant est déjà pris. Veuillez en choisir un autre.")
-                    
+
                     else:
-                        # Génération ID
                         nid = 1 if not system.customers else max(c.id for c in system.customers) + 1
                         
                         # Création du client avec TOUS les champs
-                        new_c = Customer(nid, nn, nperm, n_email, n_phone, nu, np)
+                        new_c = Customer(nid, nl, nf, int(n_age), nperm, n_email, n_phone, nu, np)
                         
                         system.add_customer(new_c)
                         save_data()
@@ -716,35 +733,44 @@ elif selected == "Louer un véhicule":
                             s_str = d_start.strftime("%Y-%m-%d")
                             e_str = d_end.strftime("%Y-%m-%d")
 
-                            try:
-                                # 1. Création via la classe Rental (Validation incluse)
-                                new_rental = Rental(me, v, s_str, e_str)
-                                
-                                # 2. Ajout au système
-                                system.rentals.append(new_rental)
-                                save_data()
+                            can_rent, reason = check_age_rule(me.age, v)
 
-                                type_vehicule = v.__class__.__name__
+                            is_motorized = isinstance(v, MotorizedVehicle)
 
-                                v_class = v.__class__.__name__
-                                sound_to_play = "succes"
+                            if is_motorized and not me.driver_license:
+                                st.error("🚫 Location impossible : Le permis de conduire est **obligatoire** pour tous les véhicules motorisés (Terre, Mer, Air).")
+                            elif not can_rent:
+                                st.error(f"🚫 Location impossible : {reason}")
+                            else:
+                                try:
+                                    # 1. Création via la classe Rental (Validation incluse)
+                                    new_rental = Rental(me, v, s_str, e_str)
+                                    
+                                    # 2. Ajout au système
+                                    system.rentals.append(new_rental)
+                                    save_data()
 
-                                class_to_key = {
-                                    "Car": "Voiture", "Truck": "Camion", "Dragon": "Dragon", 
-                                    "Horse": "Cheval", "Donkey": "Âne", "Boat": "Bateau",
-                                    "Submarine": "Sous-Marin", "Plane": "Avion"
-                                }
+                                    type_vehicule = v.__class__.__name__
 
-                                sound_key = get_sound_key_by_object(v)
-                                play_sound(sound_to_play)
+                                    v_class = v.__class__.__name__
+                                    sound_to_play = "succes"
 
-                                
-                                st.success("✅ Réservation validée !")
-                                time.sleep(2.5)
-                                st.rerun()
-                                
-                            except ValueError as e:
-                                st.error(f"Erreur : {e}")
+                                    class_to_key = {
+                                        "Car": "Voiture", "Truck": "Camion", "Dragon": "Dragon", 
+                                        "Horse": "Cheval", "Donkey": "Âne", "Boat": "Bateau",
+                                        "Submarine": "Sous-Marin", "Plane": "Avion"
+                                    }
+
+                                    sound_key = get_sound_key_by_object(v)
+                                    play_sound(sound_key)
+
+                                    
+                                    st.success("✅ Réservation validée !")
+                                    time.sleep(2.5)
+                                    st.rerun()
+                                    
+                                except ValueError as e:
+                                    st.error(f"Erreur : {e}")
 
 elif selected == "Espace Personnel":
     if st.session_state.user_role != "client": st.error("Accès réservé."); st.stop()
@@ -827,14 +853,15 @@ elif selected == "Espace Personnel":
             col_info, col_img = st.columns([3, 1])
             
             with col_info:
-                # Les champs sont pré-remplis avec les infos actuelles (value=me.x)
-                # On retire 'disabled=True' pour les rendre modifiables
-                new_name = st.text_input("Nom Complet", value=me.name)
+                new_first_name = st.text_input("Prénom", value=me.first_name)
+                new_last_name = st.text_input("Nom de Famille", value=me.last_name)
+                new_age = st.number_input("Âge", min_value=12, max_value=150, value=me.age)
+
+                st.markdown("---")
                 new_email = st.text_input("Email", value=me.email)
                 new_phone = st.text_input("Téléphone", value=me.phone)
                 new_license = st.text_input("Numéro de Permis", value=me.driver_license)
-                
-                # L'identifiant reste souvent fixe pour éviter les conflits, on le laisse gris
+
                 st.text_input("Identifiant (Non modifiable)", value=me.username, disabled=True)
             
             with col_img:
@@ -845,18 +872,17 @@ elif selected == "Espace Personnel":
             # Bouton de validation du formulaire
             if st.form_submit_button("💾 Enregistrer les modifications", type="primary"):
                 # 1. Mise à jour de l'objet Client en mémoire
-                me.name = new_name
+                me.first_name = new_first_name
+                me.last_name = new_last_name
+                me.age = int(new_age)
                 me.email = new_email
                 me.phone = new_phone
                 me.driver_license = new_license
                 
-                # 2. Sauvegarde dans le fichier JSON
                 save_data()
-                
-                # 3. Feedback et rechargement
                 st.success("Profil mis à jour avec succès !")
-                time.sleep(1)
-                st.rerun() # Force le rafraîchissement pour voir les changements partout
+                time.sleep(1); 
+                st.rerun()
 
         st.markdown("---")
         st.subheader("Zone de Danger")
