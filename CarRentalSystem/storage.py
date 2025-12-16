@@ -8,6 +8,7 @@ from fleet.animals import Horse, Donkey, Camel, Whale, Eagle, Dragon, Dolphin
 from clients.customer import Customer
 from location.rental import Rental
 from location.system import CarRentalSystem
+from fleet.transport_base import MotorizedVehicle, TransportAnimal, TowedVehicle, Maintenance
 
 class StorageManager:
     def __init__(self, filename="data.json"):
@@ -96,10 +97,22 @@ class StorageManager:
         customer_map = {}
 
         for c in cust_data:
-            user = c.get("username", f"user{c['id']}")
-            pwd = c.get("password", "1234")
+            l_name = c.get("last_name", c.get("name", "Inconnu")) # Fallback sur 'name' si vieux fichier
+            f_name = c.get("first_name", "")
+            age = c.get("age", 18)
 
-            new_c = Customer(c["id"], c["name"], c["driver_license"], c["email"], c["phone"], user, pwd)
+            new_c = Customer(
+                c["id"], 
+                l_name, 
+                f_name, 
+                age, 
+                c["driver_license"], 
+                c["email"], 
+                c["phone"], 
+                c["username"], 
+                c["password"]
+            )
+
             system.customers.append(new_c)
             customer_map[new_c.id] = new_c
 

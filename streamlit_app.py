@@ -33,7 +33,7 @@ from clients.customer import Customer
 from fleet.vehicles import *
 from fleet.animals import *
 from fleet.enums import VehicleStatus, MaintenanceType
-from fleet.transport_base import MotorizedVehicle, TransportAnimal, TowedVehicle
+from fleet.transport_base import MotorizedVehicle, TransportAnimal, TowedVehicle, Maintenance
 
 # =========================================================
 # 2. CONSTANTES & DESIGN
@@ -320,18 +320,18 @@ def check_age_rule(customer_age, vehicle):
     """Vérifie l'âge minimum requis selon le type de véhicule."""
     v_type = vehicle.__class__.__name__
 
-    if isinstance(vehicle, MotorizedVehicle) and v_type not in ["Karting"]:
-        if customer_age < 18:
-            return False, "Âge minimum requis pour la location motorisée : 18 ans."
+    if v_type in ["Truck", "Plane", "Submarine", "Dragon"]:
+        if customer_age < 21:
+            return False, "Âge minimum requis pour ce type de véhicule spécialisé (Lourd/Dragon) : 21 ans."
 
     if isinstance(vehicle, TransportAnimal):
         if customer_age < 16:
             return False, "Âge minimum requis pour la location d'animaux : 16 ans."
 
-    if v_type in ["Truck", "Plane", "Submarine", "Dragon"]:
-        if customer_age < 21:
-            return False, "Âge minimum requis pour ce type de véhicule spécialisé : 21 ans."
-    
+    if isinstance(vehicle, MotorizedVehicle) and v_type not in ["Karting"]:
+        if customer_age < 18:
+            return False, "Âge minimum requis pour la location motorisée : 18 ans."
+
     return True, None
 
 # =========================================================
@@ -710,6 +710,8 @@ elif selected == "Louer un véhicule":
                     if isinstance(v, Dragon): icon = "🐉"
                     elif isinstance(v, Boat): icon = "🚤"
                     elif isinstance(v, Plane): icon = "✈️"
+                    elif isinstance(v, (Horse, Donkey, Camel)): icon = "🐴"
+                    elif isinstance(v, (Motorcycle, GoKart)): icon = "🏍️"
                     
                     st.markdown(f"### {icon} {nom}")
                     st.caption(modele)
@@ -847,7 +849,7 @@ elif selected == "Espace Personnel":
 
                 data.append({
                     "Véhicule": f"{nom} {model}",
-                    "Période": f"{r.start_date.date()} -> {r.actual_return_date.date()}",
+                    "Période": f"{r.start_date.date()} -> {r.actual_return_date.date() if r.actual_return_date else 'En cours'}",
                     "Coût": f"{r.total_cost} €"
                 })
             st.dataframe(pd.DataFrame(data), use_container_width=True)
@@ -919,7 +921,7 @@ elif selected == "Dashboard":
     if st.session_state.user_role != "admin": st.error("Accès Admin requis."); st.stop()
     st.title("📊 Tableau de Bord")
     k1, k2 = st.columns(2)
-    k1.metric("CA Total", f"{sum(r.total_price for r in system.rentals)}€")
+    k1.metric("CA Total", f"{sum(r.total_cost for r in system.rentals):.2f}€")
     k2.metric("Clients", len(system.customers))
     st.markdown("---")
     k3, k4 = st.columns(2)
@@ -1082,7 +1084,7 @@ elif selected == "Gestion Flotte":
                 arg_a = c_spec1.number_input("Portée Feu (m)", 100.0)
                 arg_c = c_spec2.text_input("Couleur", "Rouge")
             elif v_type == "Cheval":
-                arg_a = c_spec1.number_input("Taille (cm)", 160)
+                arg_a = c_spec1.number_input("Taille (cm)", min_value=50, max_value=250, value=160)
                 arg_c = c_spec2.number_input("Fers (mm)", 100)
             elif v_type == "Âne":
                 arg_a = c_spec1.number_input("Charge (kg)", 50.0)
@@ -1379,7 +1381,10 @@ elif selected == "Locations Admin":
             d_real = r.actual_return_date.date() if r.actual_return_date else "En attente"
 
             client_name = r.customer.name if hasattr(r.customer, 'name') else f"ID {r.customer}"
-            vehicle_name = f"{r.vehicle.brand} {r.vehicle.model}"
+
+            nom = getattr(r.vehicle, 'brand', getattr(r.vehicle, 'name', 'Véhicule'))
+            modele = getattr(r.vehicle, 'model', getattr(r.vehicle, 'breed', ''))
+            vehicle_name = f"{nom} {modele}"
 
             admin_data.append({
                 "Statut": status_icon,
